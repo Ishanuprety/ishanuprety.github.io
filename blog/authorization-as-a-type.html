@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authorization as a type, not a checkbox — Ishan Uprety</title>
+<meta name="description" content="Why authorization decisions in automated vulnerability discovery belong in the type system and at system boundaries — not as scattered runtime checkbox checks.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>Authorization as a type, not a checkbox</h1>
+  <div class="byline">2026-10-17 · Ishan Uprety · 9 min read</div>
+
+  <p>Most security tooling treats authorization as a boolean you remember to ask. Before a
+    probe runs, somewhere in the call stack, there is an <code>if authorized:</code>. Miss
+    that check on one path — a retry handler, a new tool adapter, a "temporary" debug
+    route — and the safety story collapses into a hope that the operator noticed.</p>
+
+  <p>That model is fine for a script a human drives by hand. It is the wrong model for
+    anything autonomous. An agent that can invent new call paths will invent paths that
+    skip your checkbox. The interesting engineering question is not "did we remember to
+    check?" It is "can an unauthorized action even be <em>expressed</em>?"</p>
+
+  <blockquote>
+    Authorization that lives only as a runtime boolean is a policy you hope to enforce.
+    Authorization that lives in the type of the value is a constraint the program cannot
+    forget.
+  </blockquote>
+
+  <h2>The checkbox failure mode</h2>
+  <p>Scatter enough <code>assert scope.contains(host)</code> calls through a codebase and
+    you will feel safe. You will also be wrong in a predictable way. Checkboxes fail the
+    same three ways every time:</p>
+  <ul>
+    <li><strong>Omission.</strong> A new egress path is added under deadline pressure.
+      The check that lived three modules away is not copied. Nothing in the type system
+      complains.</li>
+    <li><strong>Staleness.</strong> Authorization is checked once at the start of a run,
+      then a long-lived handle is reused after the token expires or the scope shrinks.
+      The boolean was true <em>then</em>.</li>
+    <li><strong>Bypass by composition.</strong> Two individually "safe" helpers are
+      composed into a path that never re-validates the joint action. Each checkbox saw a
+      local truth; the global action was never typed.</li>
+  </ul>
+  <p>None of these are exotic. They are the ordinary failure modes of putting a
+    cross-cutting invariant into unstructured control flow. If the invariant matters —
+    and for automated discovery it is the invariant that matters most — it has to sit
+    somewhere the compiler, the runtime, or the architecture will refuse to let you
+    ignore.</p>
+
+  <h2>Make the authorized thing a different type</h2>
+  <p>The move is familiar from other domains that take invariants seriously. You do not
+    pass a raw string where a validated email is required. You do not pass a raw integer
+    where a sanitized ID is required. You wrap the value so that constructing it
+    <em>is</em> the check, and every downstream function demands the wrapped type.</p>
+  <p>Applied to authorization for a discovery system, that looks roughly like this
+    (sketched, not a library):</p>
+  <ul>
+    <li>A bare host string, URL, or network handle is <em>not</em> something the egress
+      layer will accept.</li>
+    <li>An <code>AuthorizedTarget</code> (or capability, or scoped handle) can only be
+      constructed by a gate that has seen a valid authorization record for that exact
+      subject, scope, and lifetime.</li>
+    <li>Every action that talks to the outside world takes an <code>AuthorizedTarget</code>
+      — not a string plus a hope. If you do not have one, you cannot call the function.
+      The type checker is the first rail; the gate that mints the value is the second.</li>
+  </ul>
+  <p>This is the difference between "check a flag before firing" and "you cannot fire
+    without a capability that only the authorization module can mint." The discovery
+    logic can still be clever about <em>what</em> to try next. It simply cannot name an
+    unauthorized destination in a way the egress layer will honor.</p>
+
+  <h2>Boundaries beat deep call stacks</h2>
+  <p>Types alone are not enough if unauthorized values can still leak out through a
+    side door — a raw socket opened in a plugin, a subprocess that ignores your HTTP
+    client, a DNS lookup that resolves past your allowlist. So the type discipline has
+    to sit <em>at the boundary</em> between the discovery engine and the world.</p>
+  <p>In the research system behind my thesis, that boundary is deliberate. The engine
+    proposes actions; an enforcement layer decides whether those actions are expressible
+    against the current authorization and scope. The engine does not hold the keys to
+    the network. It holds typed requests. Something else holds the ability to turn a
+    typed, authorized request into packets.</p>
+  <blockquote>
+    If discovery logic and network egress share a process and an ambient authority, every
+    "authorization check" is theatre. Separate the minting of authority from the use of
+    it.
+  </blockquote>
+  <p>That separation is what makes the type useful. An <code>AuthorizedTarget</code> is
+    not a sticker on a string. It is evidence that a gate — a choke point you can audit,
+    rate, and kill — has already accepted this subject for this window. Steal the string
+    and you still cannot mint the type. Skip the gate and there is nothing for egress to
+    accept.</p>
+
+  <h2>What this looks like in practice (generic)</h2>
+  <p>Concrete patterns that keep showing up when you take this seriously, none of them
+    tied to any particular target:</p>
+  <ul>
+    <li><strong>Newtypes / phantom types for scope.</strong> A host authorized for
+      passive mapping is a different type from a host authorized for authenticated
+      probing. You cannot accidentally widen the action class by passing the wrong
+      handle into a deeper function.</li>
+    <li><strong>Time-bounded capabilities.</strong> The authorized handle carries an
+      expiry. Construction fails when the record is stale; use after expiry fails
+      closed at the boundary, not with a warning log.</li>
+    <li><strong>Program-token accounting at the gate.</strong> If authorization is a
+      scarce resource (a per-program budget, a rate rail, a concurrent-session cap),
+      spend it when the capability is minted — not when some distant worker finally
+      fires. That prevents "I already spent the token, so surely I can also take this
+      side path" bypasses.</li>
+    <li><strong>No ambient credentials in the discovery process.</strong> API keys,
+      cookies, and client certs live behind the gate. The engine sees opaque handles,
+      not secrets it could paste into an unauthorized request.</li>
+  </ul>
+  <p>None of this requires a research language. It requires refusing to let
+    <code>str</code> mean "whatever the agent felt like probing."</p>
+
+  <h2>Why checkboxes keep winning in demos</h2>
+  <p>Checkbox authorization is popular because it demos well. You can add a flag, ship
+    a screenshot, and claim the tool "respects scope." Reviewers who only read the happy
+    path will believe you. The cost shows up later: when a new adapter is bolted on, when
+    a retry path reuses a stale handle, when two safe helpers compose into an unsafe
+    joint action.</p>
+  <p>Typed, boundary-enforced authorization demos worse and holds up better. The first
+    week feels pedantic — every new egress call needs a capability, every test has to
+    mint one through the gate, every plugin has to stop opening its own sockets. The
+    payoff is that "did we forget to check?" stops being a category of bug. The remaining
+    bugs are about the gate's policy being wrong, which is a much better class of problem
+    to have: centralized, reviewable, and testable.</p>
+
+  <h2>What I am measuring</h2>
+  <p>For the thesis, this is not a style preference. It is part of the dependent
+    variable. A rail that lives as scattered checks cannot be dialed; it can only be
+    hoped. A rail that lives as a typed boundary can be instrumented: how often did the
+    engine attempt an action the gate refused? How does coverage change when capability
+    lifetimes shrink? When scope types are narrowed from "any HTTP" to "passive only"?</p>
+  <p>Those questions only have answers if unauthorized actions are unrepresentable at
+    the egress boundary. Otherwise you are measuring documentation quality, not
+    architecture.</p>
+
+  <h2>Where this sits in the series</h2>
+  <p>Earlier posts argued that
+    <a href="safety-rails-not-warnings.html">safety has to be architectural</a>, that
+    the <a href="cost-of-being-safe.html">cost of those rails is measurable</a>, and that
+    you need a
+    <a href="reproducible-vuln-lab.html">reproducible lab</a> before the numbers mean
+    anything. This post is the authorization rail in particular: not a README line, not
+    a scattered boolean, but a type minted at a boundary the discovery engine does not
+    control.</p>
+  <p>Next up in the build log: how scope itself gets encoded — allowlists as data the
+    gate owns, not as config the agent interprets charitably.</p>
+
+  <hr>
+  <p class="muted">This is part of an open build log for my Master's research on safe
+    automated vulnerability discovery. All experimentation runs against self-owned,
+    authorized lab targets only.
+    <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

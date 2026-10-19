@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap — Ishan Uprety</title>
+<meta name="description" content="The research roadmap for safe automated vulnerability discovery: what is built, in progress, and planned.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="research.html">Research</a>
+      <a href="projects.html">Projects</a>
+      <a href="roadmap.html" aria-current="page">Roadmap</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <h1 style="letter-spacing:-0.8px;">Roadmap</h1>
+  <p class="lede muted" style="font-size:1.15rem;">How the research is sequenced: making automated
+    vulnerability discovery safe by design. Each theme below links to the write-up where one exists.
+    Status is a plain, honest snapshot &mdash; it changes as the thesis work moves.</p>
+
+  <div class="pills">
+    <span class="pill">🟢 Published</span>
+    <span class="pill">🟡 In progress</span>
+    <span class="pill">⚪ Planned</span>
+  </div>
+
+  <h2>Foundations &mdash; safety as architecture</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>Safety rails, not safety warnings</h3>
+      <p class="muted">Why responsible automation has to be architectural: the constraints live in the
+        system, not in a disclaimer. <a href="blog/safety-rails-not-warnings.html">Read &rarr;</a></p>
+    </div>
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>Authorization as a type, not a checkbox</h3>
+      <p class="muted">Modelling "allowed to act" so it cannot be forgotten or bypassed.
+        <a href="blog/authorization-as-a-type.html">Read &rarr;</a></p>
+    </div>
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>Scope encoding: allowlists the gate owns</h3>
+      <p class="muted">Scope as gate-owned data, so discovery logic can never widen its own reach.
+        <a href="blog/scope-encoding-gate-owned-allowlists.html">Read &rarr;</a></p>
+    </div>
+  </div>
+
+  <h2>Evidence &amp; evaluation</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>A reproducible vuln lab you actually trust</h3>
+      <p class="muted">Authorized, self-owned fixtures so results are repeatable and honest.
+        <a href="blog/reproducible-vuln-lab.html">Read &rarr;</a></p>
+    </div>
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>Measuring railed discovery against fixtures</h3>
+      <p class="muted">Metrics against known-answer fixtures, not hope.
+        <a href="blog/measuring-railed-discovery-against-fixtures.html">Read &rarr;</a></p>
+    </div>
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>The audit log as evidence</h3>
+      <p class="muted">A separate, tamper-evident record so findings can be verified without re-touching
+        a target. <a href="blog/audit-log-as-evidence.html">Read &rarr;</a></p>
+    </div>
+    <div class="card">
+      <div class="meta">🟢 PUBLISHED</div>
+      <h3>The cost of being safe</h3>
+      <p class="muted">Measuring the real trade-off between safety and effectiveness.
+        <a href="blog/cost-of-being-safe.html">Read &rarr;</a></p>
+    </div>
+  </div>
+
+  <h2>In progress</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="meta">🟡 IN PROGRESS</div>
+      <h3>Verification that fails closed</h3>
+      <p class="muted">Confirming a finding only when the evidence clears a confidence floor, and
+        treating anything uncertain as not confirmed. Write-up to follow.</p>
+    </div>
+    <div class="card">
+      <div class="meta">🟡 IN PROGRESS</div>
+      <h3>Continuous evaluation harness</h3>
+      <p class="muted">Growing the fixture corpus and the automated checks that keep the rails honest
+        as the system changes.</p>
+    </div>
+  </div>
+
+  <h2>Planned</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="meta">⚪ PLANNED</div>
+      <h3>Thesis write-up</h3>
+      <p class="muted">Consolidating the rails, the evaluation method, and the safety/effectiveness
+        trade-off into the Master's thesis.</p>
+    </div>
+    <div class="card">
+      <div class="meta">⚪ PLANNED</div>
+      <h3>Open method notes</h3>
+      <p class="muted">Publishing reusable patterns for safe automation that others can adopt,
+        kept strictly to public-safe, non-target-specific detail.</p>
+    </div>
+  </div>
+
+  <hr>
+  <p class="muted">This roadmap is a living plan, not a promise of dates. Follow along on the
+    <a href="blog.html">blog</a> or <a href="contact.html">get in touch</a>.</p>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="contact.html">Contact</a> · <a href="blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

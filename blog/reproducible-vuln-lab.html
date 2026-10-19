@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a reproducible vuln lab you actually trust — Ishan Uprety</title>
+<meta name="description" content="Why self-owned, containerized, deliberately-vulnerable targets are the only honest test range for safe automated vulnerability discovery — and what reproducibility has to mean.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>Building a reproducible vuln lab you actually trust</h1>
+  <div class="byline">2026-10-17 · Ishan Uprety · 8 min read</div>
+
+  <p>If you claim to measure the
+    <a href="cost-of-being-safe.html">cost of safety rails</a> in automated vulnerability
+    discovery, the first question a careful reader should ask is: measured against
+    <em>what</em>? A one-off demo on a thrown-together target is not a result. A screenshot of
+    a finding against someone else's infrastructure is not a result. A result is something
+    another researcher can re-run and get the same shape of answer.</p>
+
+  <p>That means the lab is not a side detail of the research. It <em>is</em> the research
+    substrate. If the range is fuzzy, every number that comes out of it is fuzzy. This post is
+    about what it takes to build a deliberately-vulnerable range I would actually trust —
+    and that I would ask a reviewer to trust.</p>
+
+  <h2>Why self-owned is non-negotiable</h2>
+  <p>There is a temptation, especially when the work touches bug-bounty culture, to treat live
+    programs as the "real" evaluation surface. They are real in the sense that they have
+    production complexity. They are the wrong surface for measuring a research system.</p>
+  <p>Live targets move. Authorization windows expire. Rate limits change. Findings cannot be
+    published as evaluation fixtures. You cannot dial enforcement up and down on a third-party
+    system just to plot a trade-off curve. And you certainly cannot invite another lab to
+    reproduce your numbers against someone else's assets.</p>
+  <blockquote>
+    The only honest test range for this work is one you own, can version, can destroy, and can
+    rebuild from a known commit.
+  </blockquote>
+  <p>Self-owned does not mean "a VM on my laptop with DVWA and hope." It means a
+    containerized set of deliberately vulnerable applications whose topology, versions, and
+    seeded flaws are under the same version control as the harness that runs against them.
+    When the range drifts, the commit history says so.</p>
+
+  <h2>What "reproducible" has to mean</h2>
+  <p>People say "reproducible lab" and mean "I can start the containers again." That is
+    necessary and nowhere near sufficient. For a thesis that claims to measure enforcement
+    cost, reproducibility has to cover the whole experimental loop:</p>
+  <ul>
+    <li><strong>Version-controlled configs.</strong> Image pins, compose files, seed data,
+      and network topology live in git. A run is identified by a commit SHA of the range
+      <em>and</em> a commit SHA of the harness — not by "whatever was on disk Tuesday."</li>
+    <li><strong>Same harness, known knobs.</strong> The discovery engine that exercises the
+      range is the same binary (or the same resolved dependency set) every time. Rail
+      strictness is a dial with named levels, not a pile of ad-hoc flags someone remembered
+      to set.</li>
+    <li><strong>Rails dialed up and down on purpose.</strong> The point of the lab is the
+      comparison: strict enforcement versus relaxed enforcement on an otherwise identical
+      run. If you cannot flip that dial cleanly, you do not have a trade-off experiment —
+      you have a story.</li>
+    <li><strong>Re-runnable by others.</strong> A stranger with the repo, a container runtime,
+      and the documented entrypoint should be able to reproduce the curve within noise.
+      If that requires my personal environment, it is not reproducible.</li>
+  </ul>
+  <p>None of this is exotic infrastructure. It is the same discipline experimental sciences
+    have always required, applied to a security-research range that happens to be made of
+    containers.</p>
+
+  <h2>Deliberately vulnerable, deliberately boring</h2>
+  <p>The targets themselves should be boring in the right ways. Known vulnerability classes,
+    known ground truth, enough surface to exercise authorization, scope, rate, and blast-radius
+    gates — and no more drama than that. Fancy zero-days are the wrong fixture; you cannot
+    score coverage against a mystery.</p>
+  <p>What the range <em>does</em> need is structural variety: different auth models, different
+    trust boundaries, enough network shape that a scope gate has something real to enforce.
+    A flat single-app lab under-tests the rails. A zoo of unrelated apps over-tests nothing
+    and makes the curve unreadable. The design problem is choosing a small set that stresses
+    the enforcement layer without turning the evaluation into folklore.</p>
+
+  <h2>The ethics line that makes the lab credible</h2>
+  <p>This is the part that is easy to skip in a build log and fatal to skip in a thesis about
+    responsible automation.</p>
+  <p><strong>Nothing live. Nothing third-party.</strong> The evaluation never points the
+    harness at a production system, a bug-bounty asset, or anyone else's lab without an
+    explicit, recorded authorization that is not part of this measurement story. The
+    measurement story runs on the self-owned range. Full stop.</p>
+  <p>That is not a purity ritual. It is load-bearing for the claim. If you test "safe
+    automation" by occasionally going unsafe, you have undercut the thing you said you were
+    measuring. The
+    <a href="safety-rails-not-warnings.html">architectural rails</a> exist so the engine
+    cannot overstep; the lab exists so you can prove what those rails cost without needing
+    to overstep in order to find out.</p>
+  <blockquote>
+    Responsible automation has to be tested responsibly — or the numbers are about a
+    different system than the one you claim to have built.
+  </blockquote>
+
+  <h2>What trust looks like in practice</h2>
+  <p>A lab I trust is one where I can answer, from artifacts alone:</p>
+  <ul>
+    <li>Which range commit and harness commit produced this curve?</li>
+    <li>Which rail level was active, and is that level encoded as data rather than as a
+      prose recollection?</li>
+    <li>Did any action escape a gate? (The audit log answers; hope does not.)</li>
+    <li>Can a reviewer rebuild and re-run without pinging me?</li>
+  </ul>
+  <p>If any of those answers is hand-wavy, the lab is not ready to support a claim about
+    safety cost. Getting those answers to be boring and mechanical is most of the work.</p>
+
+  <h2>Where this sits in the build log</h2>
+  <p>Post 1 argued that safety has to be architectural.
+    Post 2 framed the trade-off curve that architecture forces you to measure.
+    This post is the substrate those measurements sit on. Without a reproducible,
+    self-owned, ethically bounded range, the curve is an anecdote with a graph attached.</p>
+  <p>Next up in the series: treating authorization as a type the system understands —
+    not a checkbox an operator once ticked.</p>
+
+  <hr>
+  <p class="muted">Part of an open build log for my Master's research on safe automated
+    vulnerability discovery. All experimentation runs against self-owned, authorized lab
+    targets only. <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

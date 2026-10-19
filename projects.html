@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects — Ishan Uprety</title>
+<meta name="description" content="Projects by Ishan Uprety, including Warren, a safety-railed automated vulnerability-discovery research system.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="research.html">Research</a>
+      <a href="projects.html" aria-current="page">Projects</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <h1 style="letter-spacing:-0.8px;">Projects</h1>
+  <p class="lede muted" style="font-size:1.15rem;">Research systems and tools. Everything here is
+    evaluated against authorized lab targets — no live or third-party testing.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="meta">RESEARCH SYSTEM · ACTIVE</div>
+      <h3>Warren</h3>
+      <p>A research pipeline for automated vulnerability discovery, built around the thesis's
+        central idea: the discovery engine is <strong>subordinate to a non-bypassable enforcement
+        layer</strong>. Authorization, scope, rate/blast-radius, verification, kill-switch, and a
+        tamper-evident audit log are implemented as gates the discovery logic can't route around.</p>
+      <p class="muted">Public description only — this is a research artifact evaluated on self-owned,
+        reproducible targets. No private findings or target-specific detail are published.</p>
+      <div class="pills">
+        <span class="pill">enforcement layer</span>
+        <span class="pill">scope gating</span>
+        <span class="pill">audit log</span>
+        <span class="pill">kill-switch</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">EVALUATION · IN PROGRESS</div>
+      <h3>Reproducible lab range</h3>
+      <p>A containerized set of deliberately vulnerable, self-owned targets used as a repeatable,
+        authorized test range. Lets the safety/effectiveness trade-off be measured consistently and
+        re-run by others.</p>
+      <div class="pills">
+        <span class="pill">containers</span>
+        <span class="pill">known-vulnerable images</span>
+        <span class="pill">reproducibility</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">WRITING · ONGOING</div>
+      <h3>Safe-automation field notes</h3>
+      <p>An open body of writing on the engineering of restraint in security automation —
+        taxonomies, patterns, and anti-patterns others can reuse. Published on the
+        <a href="blog.html">blog</a>.</p>
+      <div class="pills">
+        <span class="pill">patterns</span>
+        <span class="pill">taxonomy</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <p class="muted">Code repositories and write-ups will be linked here as they're published.
+    Want detail on any of these? <a href="contact.html">Reach out</a>.</p>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="contact.html">Contact</a> · <a href="blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

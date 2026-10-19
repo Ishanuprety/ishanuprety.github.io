@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scope encoding: allowlists the gate owns — Ishan Uprety</title>
+<meta name="description" content="How to encode program scope as typed, versioned, gate-owned allowlist state — so autonomous discovery cannot interpret scope charitably or skip the boundary.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>Scope encoding: allowlists the gate owns</h1>
+  <div class="byline">2026-10-18 · Ishan Uprety · 9 min read</div>
+
+  <p>Authorization answers whether an action is expressible.
+    <a href="authorization-as-a-type.html">The previous post</a> argued that answer
+    belongs in a type minted at a boundary the discovery engine does not control.
+    Scope answers a different question: <em>where</em> that action may land. If scope
+    lives as a file the tool reads and interprets charitably, you have documentation —
+    not a rail.</p>
+
+  <p>This post is about encoding. How do you represent an allowlist so that an
+    autonomous (or semi-autonomous) pipeline cannot quietly widen it, drift past a
+    program update, or open a side door that never consulted the gate?</p>
+
+  <blockquote>
+    Scope that lives as a string next to the scraper is advice. Scope that lives as
+    typed, versioned state the gate alone can mint from is a constraint.
+  </blockquote>
+
+  <h2>Three failure modes of tool-local scope</h2>
+  <p>Put a <code>scope.json</code> beside the worker and you will feel organized. You
+    will also be wrong in three predictable ways:</p>
+  <ul>
+    <li><strong>Drift.</strong> The bounty platform updates the program. Your local
+      file is yesterday's truth. The tool still "respects scope" — its copy.</li>
+    <li><strong>Charitable parsing.</strong> Wildcards, carve-outs, and "explicitly
+      excluded" subdomains get flattened into a longer allow list. Ambiguity resolves
+      toward <em>more</em> targets because that makes the demo green.</li>
+    <li><strong>Side doors.</strong> A new adapter opens its own HTTP client and reads
+      <code>SCOPE</code> from the environment. The proxy never sees the decision. A
+      file that is not on the wire cannot refuse a packet.</li>
+  </ul>
+  <p>None of these require malice. Agents invent call paths. Paths that skip the gate
+    will skip the file you hoped they would read.</p>
+
+  <h2>Owned state, not shared config</h2>
+  <p>"Gate-owned" is not a slogan. It means three concrete properties of the encoding:</p>
+  <ul>
+    <li><strong>Single writer.</strong> Scope updates go through the gate (or a loader
+      the gate alone trusts). Tool-local copies are caches at best, never sources of
+      truth. If two processes can rewrite the allowlist, you no longer know which
+      revision authorized a packet.</li>
+    <li><strong>Typed match, not substring hope.</strong> Matching is an explicit
+      operation on owned structures — exact host, suffix rule, path prefix, port class —
+      with a defined fail-closed outcome. It is not
+      <code>if host in open("scope.txt").read()</code>.</li>
+    <li><strong>Version and lifetime on the handle.</strong> The minted capability
+      carries which scope revision and window it was checked against. A later shrink
+      invalidates use at the boundary. Stale tool-local files do not get a veto.</li>
+  </ul>
+  <p>That is the same architectural move as an <code>AuthorizedTarget</code>: make the
+    unauthorized (or out-of-scope) action unrepresentable at egress, rather than
+    "hopefully checked" earlier in the stack.</p>
+
+  <h2>Encoding shapes that survive contact with agents</h2>
+  <p>Concrete patterns that keep showing up when you take scope seriously — none tied
+    to a particular program:</p>
+  <ul>
+    <li><strong>Host class before path class.</strong> Separate "which hosts are in
+      play" from "which path prefixes are allowed on those hosts." Mixing them into one
+      glob invites the charitable parse. A host that is out of scope should fail before
+      any path rule is consulted.</li>
+    <li><strong>Explicit carve-outs as first-class rules.</strong> Exclusions are not
+      comments in a README. They are deny rules with the same type as allow rules, and
+      deny wins on conflict. If the encoding cannot express "all of <code>*.example</code>
+      except <code>payments.example</code>," operators will approximate — and approximations
+      leak.</li>
+    <li><strong>Action-class narrowing.</strong> A host authorized for passive mapping
+      is a different capability from a host authorized for authenticated probing. Scope
+      encoding that only stores hostnames silently upgrades every later stage. Pair the
+      host rule with an action class at mint time.</li>
+    <li><strong>Revision identifiers in the capability.</strong> Every minted handle
+      records <code>scope_rev</code>. Metrics and audits can answer "under which
+      revision was this packet allowed?" without reconstructing history from logs.</li>
+    <li><strong>Indeterminate → refuse.</strong> Missing blob, unloadable revision,
+      ambiguous overlap between allow and carve-out: the gate does not guess. Refusal is
+      a counted outcome, not a quiet empty allowlist that looks like "nothing to do."</li>
+  </ul>
+
+  <h2>Fail-closed is a measurement, not a mood</h2>
+  <p>A rail that cannot decide must refuse. That sounds dramatic until you put it on
+    the same scoreboard as coverage:</p>
+  <ul>
+    <li>How often did the engine propose a host the gate refused?</li>
+    <li>How does rediscovery change when carve-outs tighten?</li>
+    <li>When scope revisions shrink mid-run, do in-flight handles invalidate, or do
+      you keep spending budget against yesterday's truth?</li>
+  </ul>
+  <p>Those questions only have answers if out-of-scope actions are unrepresentable at
+    the egress boundary. Otherwise you are measuring how often the loader happened to
+    work — not whether the architecture held.</p>
+
+  <blockquote>
+    If missing or indeterminate scope becomes a silent pass, your safety metrics
+    measure documentation quality. Prefer a loud refusal you can count.
+  </blockquote>
+
+  <h2>A lab-shaped sketch (pattern only)</h2>
+  <p>No real program names. No hunt detail. Just the shape:</p>
+  <ol>
+    <li>A discovery worker proposes <code>GET https://lab.example.invalid/health</code>
+      under a program token the gate already accepted for <em>authorization</em>.</li>
+    <li>The gate does <strong>not</strong> ask the worker for a scope file. It matches
+      the host against <strong>its</strong> allowlist revision <code>R17</code> (lab
+      suffixes only).</li>
+    <li>Match succeeds → mint
+      <code>ScopedTarget{host, rev=R17, class=passive_http, exp=…}</code>.</li>
+    <li>Egress accepts only that type. A parallel worker still holding a string from an
+      old <code>scope.txt</code> beside a scraper cannot call the same egress API.</li>
+    <li>If <code>R17</code> cannot be loaded, or the match is indeterminate, minting
+      fails. The refusal is counted. No packets leave for that proposal.</li>
+  </ol>
+  <p>Authorization without scope is a typed blank check. Scope without a gate is a
+    README. Together, at one choke point, they turn proposals into packets — or into
+    measurable refusals.</p>
+
+  <h2>Where this sits in the series</h2>
+  <p>Earlier posts argued that
+    <a href="safety-rails-not-warnings.html">safety has to be architectural</a>, that
+    the <a href="cost-of-being-safe.html">cost of those rails is measurable</a>, that
+    you need a
+    <a href="reproducible-vuln-lab.html">reproducible lab</a> before the numbers mean
+    anything, and that
+    <a href="authorization-as-a-type.html">authorization belongs in a type</a>. This
+    post is the companion rail: scope as data the gate owns and encodes explicitly —
+    host class, path class, action class, revision, fail-closed default — not as config
+    the agent interprets charitably.</p>
+  <p>Next in the build log: how those two rails (authorization + scope) show up in
+    evaluation metrics when the discovery loop is driven against fixtures rather than
+    hope.</p>
+
+  <hr>
+  <p class="muted">This is part of an open build log for my Master's research on safe
+    automated vulnerability discovery. All experimentation runs against self-owned,
+    authorized lab targets only.
+    <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

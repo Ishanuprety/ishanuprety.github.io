@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Ishan Uprety</title>
+<meta name="description" content="Writing on safe automated vulnerability discovery, safety engineering, and research notes.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="research.html">Research</a>
+      <a href="projects.html">Projects</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="blog.html" aria-current="page">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <h1 style="letter-spacing:-0.8px;">Blog</h1>
+  <p class="lede muted" style="font-size:1.15rem;">Notes on building automated discovery that
+    can't overstep its bounds — method, safety engineering, and what I'm learning.</p>
+
+  <ul class="post-list">
+    <li>
+      <a href="blog/audit-log-as-evidence.html">The audit log as evidence</a>
+      <span class="date">2026-10-19 · 10 min</span>
+    </li>
+    <li>
+      <a href="blog/measuring-railed-discovery-against-fixtures.html">Measuring railed discovery: metrics against fixtures, not hope</a>
+      <span class="date">2026-10-19 · 10 min</span>
+    </li>
+    <li>
+      <a href="blog/scope-encoding-gate-owned-allowlists.html">Scope encoding: allowlists the gate owns</a>
+      <span class="date">2026-10-18 · 9 min</span>
+    </li>
+    <li>
+      <a href="blog/authorization-as-a-type.html">Authorization as a type, not a checkbox</a>
+      <span class="date">2026-10-17 · 9 min</span>
+    </li>
+    <li>
+      <a href="blog/reproducible-vuln-lab.html">Building a reproducible vuln lab you actually trust</a>
+      <span class="date">2026-10-17 · 8 min</span>
+    </li>
+    <li>
+      <a href="blog/safety-rails-not-warnings.html">Safety rails, not safety warnings: why responsible automation has to be architectural</a>
+      <span class="date">2026-10-15 · 7 min</span>
+    </li>
+    <li>
+      <a href="blog/cost-of-being-safe.html">The cost of being safe: measuring the trade-off in automated vulnerability discovery</a>
+      <span class="date">2026-10-15 · 6 min</span>
+    </li>
+  </ul>
+
+  <hr>
+  <p class="muted">New posts roughly every two weeks, following the thesis. Want to be notified?
+    <a href="contact.html">Say hi</a> — a mailing list is coming.</p>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="contact.html">Contact</a> · <a href="blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

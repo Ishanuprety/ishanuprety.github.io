@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research &amp; About — Ishan Uprety</title>
+<meta name="description" content="About Ishan Uprety and the research program: safety-railed automated vulnerability discovery.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="research.html" aria-current="page">Research</a>
+      <a href="projects.html">Projects</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <h1 style="letter-spacing:-0.8px;">Research &amp; About</h1>
+  <p class="lede muted" style="font-size:1.15rem;">Cybersecurity &amp; networking researcher.
+    I design automated vulnerability-discovery systems whose safety constraints are structural.</p>
+
+  <h2>About</h2>
+  <p>I'm a Master's-by-research student in cybersecurity and networking, based in Nepal. I spend
+    my time at the intersection of security automation and the engineering of restraint: how do
+    you build a system that finds flaws efficiently <em>and</em> is provably unable to overstep
+    its authorization? Outside the thesis I participate in the security community under the alias
+    <code>Reck1ess</code>.</p>
+
+  <h2>Research program</h2>
+  <p>Automated and AI-assisted vulnerability discovery is advancing faster than the control story
+    around it. Most tooling optimizes for detection capability and treats authorization, scope,
+    and blast-radius as operational concerns handled by the operator. My thesis argues the
+    opposite: <strong>safety should be a first-class, engineered property of the system</strong>.</p>
+
+  <blockquote>
+    How can an automated vulnerability-discovery system be designed so that its safety constraints
+    are <em>structural</em> — enforced by the architecture itself — rather than relying on operator
+    discipline or post-hoc policy?
+  </blockquote>
+
+  <h3>The safety rails</h3>
+  <ul>
+    <li><strong>Authorization gating</strong> — nothing runs against a target without an explicit,
+      checkable authorization.</li>
+    <li><strong>Scope enforcement</strong> — the engine physically cannot reach outside declared
+      scope.</li>
+    <li><strong>Blast-radius &amp; rate control</strong> — bounded, observable impact.</li>
+    <li><strong>Verification before report</strong> — findings are validated, not just asserted.</li>
+    <li><strong>Kill-switch</strong> — a single, reliable stop.</li>
+    <li><strong>Tamper-evident audit</strong> — every action is accountable after the fact.</li>
+  </ul>
+
+  <h3>How it's studied</h3>
+  <p>All experimentation runs against <strong>self-owned or explicitly authorized, reproducible
+    lab targets</strong> — never live or third-party systems. The research measures the trade-off
+    between how strict the rails are and how much discovery coverage you keep: the real cost of
+    being safe. Weaponizable exploit code and detection-evasion techniques are explicit non-goals
+    and are not published.</p>
+
+  <p class="muted">Full proposal available on request — problem, contribution, methodology,
+    evaluation plan, ethics, and an ~18-month timeline.</p>
+
+  <h2>Interests</h2>
+  <div class="pills">
+    <span class="pill">security automation</span>
+    <span class="pill">safe AI agents</span>
+    <span class="pill">responsible disclosure</span>
+    <span class="pill">network security</span>
+    <span class="pill">reproducible evaluation</span>
+    <span class="pill">audit &amp; accountability</span>
+  </div>
+
+  <hr>
+  <div class="btn-row">
+    <a class="btn" href="projects.html">See the projects</a>
+    <a class="btn secondary" href="contact.html">Get in touch</a>
+  </div>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="contact.html">Contact</a> · <a href="blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

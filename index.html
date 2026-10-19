@@ -1,164 +1,91 @@
 <!DOCTYPE html>
-<html lang="en-us">
-<html>
-<link rel="stylesheet" type="text/css" href="css/first.css" media="screen" />
-<link rel="icon" href="my_icon.png">
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <title>Ishan</title>
- 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ishan Uprety — Security Researcher</title>
+<meta name="description" content="Cybersecurity researcher working on automated vulnerability discovery with safety rails. Master's by research.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
-
-
-
 <body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="research.html">Research</a>
+      <a href="projects.html">Projects</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
 
-<!-- nav bar----------
-    <div class="navbar">
-        <div class="home">
-            <button type="button">Home</button>
-        </div>
-
-        <div class="whoami">
-            <button type="button">whoami</button>
-        </div>
-        
-        <div class="skill">
-            <button type="button">skills</button>
-        </div>
-        
-        <div class="contact_me">
-            <button type="button">contact me</button>
-        </div>
-        
-        
-
-    </div>     -->
-
-<!-- particles.js container -->
-
-<div id="particles-js">
-    
-    <div class="intro_page">
-        <center>
-        <p><b>Hello, I'm <u><span style="color: deeppink;">Ishan Uprety</span></u>.</b></p>
-        <br>
-        <h1>I aim to be a Professional Ethical Hacker</h1>
-    </center>
-    
+<div class="wrap">
+  <section class="hero">
+    <div class="tag">Cybersecurity Research</div>
+    <h1>Making automated vulnerability discovery <em>safe</em> by design.</h1>
+    <p class="lede">I'm Ishan Uprety — a cybersecurity &amp; networking researcher building
+      automated vulnerability-discovery systems where the safety constraints are part of the
+      architecture, not an afterthought.</p>
+    <div class="btn-row">
+      <a class="btn" href="research.html">Read the research</a>
+      <a class="btn secondary" href="blog.html">Latest writing</a>
     </div>
-<!-- scripts 
-    <div class="para">
-        <center>
-        <p>Dattebayo!</p>
-    </div>
-        </center>
--->
+  </section>
 </div>
 
+<main>
+<div class="wrap">
+  <h2>What I work on</h2>
+  <p>Automation that can find security flaws is powerful and dual-use. My work focuses on the
+    part most tools skip: building the <strong>rails</strong> — authorization gating, scope
+    enforcement, blast-radius limits, kill-switches, and tamper-evident audit — so that a
+    discovery system <em>cannot</em> act outside what it's allowed to do. This is the subject of
+    my Master's thesis and the research system behind it.</p>
 
-    <!-- scripts -->
-    <script src="particles.js"></script>
+  <div class="pills">
+    <span class="pill">automated discovery</span>
+    <span class="pill">safety rails</span>
+    <span class="pill">authorization gating</span>
+    <span class="pill">responsible disclosure</span>
+    <span class="pill">networking</span>
+  </div>
 
-    <script src="app.js"></script>
-
-    <!--------------------------------------------- About me ------------------------------>
-    <div class="aboutme">
-
-
-        <img class="photo" src="red.png" alt="avatar" >
-
-
-        <!-------
-        <div class="contain">
-            
-            <div class="overlay">
-              <div class="text">Ishan Uprety</div>
-            </div>
-          </div>
-        -------------------->
-       
-           
-        
-            
-        
-            <div class="whoiswala">
-                <p><u>Who's this guy?</u></p>
-        </div> 
-        <div class="myinfo">
-            <p>
-                Hi there, I am a Creative Developer and Designer, I enjoy building
-                 beautiful and thoughtful experiences. I like to mix code surprising
-                  visuals and pleasing interactions. I take my work seriously but not
-                   myself.<br><br>
-
-                   I don’t like to define myself by the work I’ve done. I define myself 
-                   by the work I want to do. Skills can be taught, personality is inherent.
-                    I prefer to keep learning, continue challenging myself, and do interesting 
-                    things that matter.<br><br>
-
-
-                   Fueled by high energy levels and boundless enthusiasm, I’m easily inspired 
-                   and more then willing to follow my fascinations wherever 
-                   they take me. I’m passionate, expressive, multi-talented 
-                   spirit with a natural ability to entertain and inspire.
-                    I’m never satisfied to just come up with ideas. Instead 
-                    I have an almost impulsive need to act on them.<br><br>
-
-                    My abundant energy fuels me in the pursuit of many interests, hobbies, 
-                    areas of study and artistic endeavors. I’m a fast learner, able to pick 
-                    up new skills and juggle different projects and roles with 
-                    relative ease.
-
-
-
-            </p>
-        </div>      
+  <h2>Highlights</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="meta">RESEARCH SYSTEM</div>
+      <h3>Warren — safety-railed discovery pipeline</h3>
+      <p class="muted">A research pipeline where discovery logic is subordinate to a
+        non-bypassable enforcement layer. Built and evaluated against authorized lab targets only.</p>
+      <a href="projects.html">See projects →</a>
     </div>
-
-
-    <div class="skills">
-
+    <div class="card">
+      <div class="meta">THESIS · MASTER'S BY RESEARCH</div>
+      <h3>Ethics as architecture</h3>
+      <p class="muted">Formalizing the safety rails automated discovery needs, and measuring the
+        real trade-off between being safe and being effective.</p>
+      <a href="research.html">Read more →</a>
     </div>
-
-
-    <center>
-    <div class="secondpart">
-        
-
-<!--
-        <form action="mailto:ishanuprety18@gmail.com" method="POST" enctype="text/plain">
-            <label>Your Name:</label>
-            <input type="text" name="yourName" value=""><br>
-            <br>
-            <label>Your Email:</label>
-            <input type="email" name="yourEmail" value=""><br>
-            <br>
-            <label>Your message:</label><br>
-            <textarea name="yourMessage" rows="10" cols="30"></textarea><br>
-            <br>
-            <input type="submit" name="">
-
-        </form>
-        -->
-        <br>
-        <a href="https://www.facebook.com/ishan.uprety.9"><img src="fb_logo.png" width="50" height="50">
-        </a>
+    <div class="card">
+      <div class="meta">WRITING</div>
+      <h3>Build log &amp; field notes</h3>
+      <p class="muted">Honest notes on method, safety engineering, and the papers I'm reading.</p>
+      <a href="blog.html">Go to blog →</a>
     </div>
-  
-    </center>
+  </div>
+</div>
+</main>
 
-
-
-
-
-
-
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="contact.html">Contact</a> · <a href="blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
 </body>
-
-
-
 </html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety rails, not safety warnings — Ishan Uprety</title>
+<meta name="description" content="Why responsible automated vulnerability discovery has to enforce its constraints architecturally, not through operator discipline.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>Safety rails, not safety warnings</h1>
+  <div class="byline">2026-10-15 · Ishan Uprety · 7 min read</div>
+
+  <p>Most automated security tooling ships its safety story in the README. "Only run this against
+    systems you're authorized to test." "Be careful with the rate limits." "Don't point it at
+    production." These are <em>warnings</em> — and warnings are the weakest possible control,
+    because they depend entirely on a tired human reading them and staying disciplined at 2 a.m.</p>
+
+  <p>As we hand more of the discovery loop to automation and AI agents, that model breaks. A system
+    that can decide <em>what</em> to probe next, and act on it in milliseconds, cannot have its
+    safety rest on operator attentiveness. The constraints have to live in the architecture.</p>
+
+  <h2>Capability is outrunning control</h2>
+  <p>The research energy in automated vulnerability discovery goes almost entirely into
+    capability: find more classes of bug, find them faster, chain them further. Authorization,
+    scope, and blast-radius get treated as operational concerns — something the operator wraps
+    around the tool, not something the tool guarantees about itself.</p>
+  <p>That's backwards for anything autonomous. If the system can take actions on its own, then the
+    question that matters is not "how capable is it?" but "what is it <em>structurally unable</em>
+    to do?"</p>
+
+  <blockquote>
+    A safe automated system isn't one that's been told the rules. It's one that cannot break them
+    even when the discovery logic "wants" to.
+  </blockquote>
+
+  <h2>What architectural safety looks like</h2>
+  <p>In the research system behind my thesis, the discovery engine is deliberately not in charge.
+    It's subordinate to an enforcement layer that sits between it and the world, and every
+    outbound action passes through gates it cannot route around:</p>
+  <ul>
+    <li><strong>Authorization gating.</strong> No action executes without an explicit, checkable
+      authorization for that target. Absent or expired authorization isn't a warning — it's a hard
+      stop.</li>
+    <li><strong>Scope enforcement.</strong> Declared scope is a boundary the engine physically
+      cannot cross. "Out of scope" isn't a policy the operator remembers; it's a wall.</li>
+    <li><strong>Blast-radius and rate control.</strong> Impact is bounded and observable by
+      construction, not by hoping the defaults are sane.</li>
+    <li><strong>Verification before report.</strong> A finding has to be validated before it
+      counts, which also curbs the automation's incentive to be reckless for signal.</li>
+    <li><strong>Kill-switch.</strong> One reliable stop that actually stops everything.</li>
+    <li><strong>Tamper-evident audit.</strong> Every action is accountable after the fact, so the
+      system's behaviour is reviewable rather than taken on trust.</li>
+  </ul>
+
+  <h2>Why this is the interesting problem</h2>
+  <p>It would be easy to treat all of this as compliance overhead — boxes to tick so nobody sues
+    you. I think that misses the point. Designing a system whose <em>restraint is provable</em> is
+    a genuinely hard engineering problem, and it's the one that decides whether automated discovery
+    is a net good or a liability.</p>
+  <p>It's also where the research contribution is. Anyone can bolt on more capability. Making the
+    safety non-bypassable — and measuring what that costs you in coverage — is the part worth a
+    thesis.</p>
+
+  <h2>Where this goes next</h2>
+  <p>The obvious follow-up question: if you enforce all of this, how much discovery power do you
+    give up? That trade-off — the cost of being safe — is the subject of the
+    <a href="cost-of-being-safe.html">next post</a>.</p>
+
+  <hr>
+  <p class="muted">This is part of an open build log for my Master's research on safe automated
+    vulnerability discovery. All experimentation runs against self-owned, authorized lab targets
+    only. <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

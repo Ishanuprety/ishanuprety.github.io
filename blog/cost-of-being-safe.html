@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The cost of being safe — Ishan Uprety</title>
+<meta name="description" content="How to measure the trade-off between safety-rail strictness and discovery effectiveness in automated vulnerability discovery.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>The cost of being safe</h1>
+  <div class="byline">2026-10-15 · Ishan Uprety · 6 min read</div>
+
+  <p>If you build an automated vulnerability-discovery system with hard
+    <a href="safety-rails-not-warnings.html">safety rails</a>, there's an obvious objection:
+    doesn't all that enforcement make it worse at the actual job? Every gate is a place the engine
+    might have found something and now can't. So — how much do the rails actually cost you?</p>
+
+  <p>That's not a rhetorical question. It's a measurable one, and measuring it is a core part of my
+    thesis. If the answer is "the rails cost almost nothing," that's a strong argument that safe
+    automation is simply the correct default. If the answer is "the rails cost a lot," that's worth
+    knowing too — it tells you exactly where safety and capability are in genuine tension.</p>
+
+  <h2>Framing it as a trade-off curve</h2>
+  <p>The clean way to think about this is a curve. On one axis, how strict the safety rails are.
+    On the other, how effective the system is at discovery. The interesting question isn't a single
+    number — it's the <em>shape</em> of that curve.</p>
+  <blockquote>
+    Is it a gentle slope — a little safety is nearly free — or a cliff, where past some point every
+    bit of extra safety costs you disproportionately?
+  </blockquote>
+  <p>My hypothesis, going in, is that it's closer to a gentle slope than practitioners assume: most
+    of the safety rails constrain <em>how</em> the engine acts, not <em>what</em> it can find, so
+    coverage holds up longer than intuition suggests. The experiments exist to test that, not to
+    confirm it.</p>
+
+  <h2>What to measure, and against what</h2>
+  <p>To get an honest curve you need both sides instrumented:</p>
+  <ul>
+    <li><strong>Effectiveness:</strong> vulnerability-class coverage and discovery throughput on a
+      fixed, reproducible target range.</li>
+    <li><strong>Safety:</strong> the count and classification of constraint-violation
+      <em>attempts the enforcement layer blocked</em>, plus proof that no action escaped a gate —
+      which falls out of a complete audit log.</li>
+    <li><strong>The baseline:</strong> the same engine with rails relaxed, run in an isolated,
+      self-owned environment, so "cost" is measured against a real comparison rather than a guess.</li>
+  </ul>
+
+  <h2>Reproducibility is the whole game</h2>
+  <p>None of this means anything if it can't be re-run. So the evaluation is built on a
+    containerized range of deliberately vulnerable, self-owned targets with version-controlled
+    configs. Same targets, same harness, rails dialed up and down — that's what makes the trade-off
+    curve a result rather than an anecdote. And critically: <strong>nothing here touches a live or
+    third-party system.</strong> The point of a responsible-automation thesis is undercut the
+    moment you test it irresponsibly.</p>
+
+  <h2>Why the number matters beyond the thesis</h2>
+  <p>Teams adopting automated or agentic security tooling are implicitly making this trade-off
+    already — usually without measuring it, often by turning safety down to get more signal. Putting
+    a real curve on it changes that conversation. "Strict mode costs you 8% coverage and eliminates
+    an entire class of scope-violation risk" is a decision someone can actually make. "Be careful"
+    is not.</p>
+
+  <hr>
+  <p class="muted">Part of an open build log for my Master's research on safe automated
+    vulnerability discovery. Experiments run on self-owned, authorized lab targets only.
+    <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

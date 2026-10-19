@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Measuring railed discovery: metrics against fixtures, not hope — Ishan Uprety</title>
+<meta name="description" content="How to evaluate a safety-railed automated vulnerability-discovery system honestly: labelled offline fixtures, precision and recall, false-positive cost, fail-closed refusals as successes, and deterministic replay.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>Measuring railed discovery: metrics against fixtures, not hope</h1>
+  <div class="byline">2026-10-19 · Ishan Uprety · 10 min read</div>
+
+  <p>The last two posts built two rails.
+    <a href="authorization-as-a-type.html">Authorization as a type</a> decides whether an
+    action can be expressed at all.
+    <a href="scope-encoding-gate-owned-allowlists.html">Scope as gate-owned data</a>
+    decides where that action may land. Both fail closed. Both produce refusals you can
+    count.</p>
+
+  <p>That leaves the question every reviewer asks first: <em>does it work?</em> And the
+    honest answer is that "work" means two different things for a safety-railed
+    discovery system. Did it find the real bugs? And did it refuse everything it should
+    have refused? Most of the trouble in evaluating these systems comes from
+    collapsing those two questions into one number.</p>
+
+  <blockquote>
+    A blocked out-of-scope action is not a miss. It is the rail doing its job. If your
+    scoreboard counts it against the system, you are training yourself to loosen the
+    rail.
+  </blockquote>
+
+  <h2>Ground truth only exists where you put it</h2>
+  <p>Precision and recall need labels. You can only compute recall if you know what was
+    there to be found. That single fact settles where evaluation happens: against
+    <strong>labelled offline fixtures</strong>, which are self-owned, deliberately
+    vulnerable targets where every planted issue is written down before the run
+    starts.</p>
+  <p>Live third-party targets fail this test on every axis at once:</p>
+  <ul>
+    <li><strong>No labels.</strong> You do not know what is there, so recall is
+      undefined. A finding count from a live target says nothing about what was missed.</li>
+    <li><strong>No repeatability.</strong> The target changes under you. Next week's run
+      is against a different system, so you cannot compare configurations.</li>
+    <li><strong>No authorization for experiments.</strong> A bounty program authorizes
+      testing within its rules. It does not authorize using its production systems as
+      your benchmark, running ablations against it, or deliberately turning rails down
+      to see what happens.</li>
+  </ul>
+  <p>So the rule is simple. Evaluation numbers come from fixtures. A number measured on
+    a live third-party target is neither ethical nor scientific, and a thesis about
+    responsible automation cannot rest on one.</p>
+
+  <h2>What a labelled fixture actually contains</h2>
+  <p>A fixture is more than a vulnerable container. For metrics to mean something, it
+    needs a manifest committed alongside it:</p>
+  <ul>
+    <li><strong>Pinned identity.</strong> An image digest, not a tag. "The same fixture"
+      has to mean byte-identical, or comparisons across runs are comparisons across
+      targets.</li>
+    <li><strong>Positive labels.</strong> Each planted issue gets a class, a location
+      (endpoint, parameter, component), and any preconditions such as auth state.
+      These are written down before any run, never reconstructed afterwards from what
+      the tool happened to report.</li>
+    <li><strong>Negative labels.</strong> Known-clean endpoints and decoys that look
+      suspicious but are not vulnerable. Without them you cannot tell precision apart
+      from luck.</li>
+    <li><strong>Out-of-scope decoys.</strong> Hosts and paths the fixture's scope
+      revision explicitly excludes, some of them deliberately tempting, and some with
+      planted issues of their own. These exist to exercise the rails. A system that
+      "finds" a bug on an out-of-scope decoy has not succeeded. It has escaped.</li>
+    <li><strong>A pre-declared match rule.</strong> What counts as a hit: same class and
+      same location, or same class anywhere on the host? Decide before the run. A match
+      rule chosen afterwards will always turn out generous.</li>
+  </ul>
+
+  <h2>Two scoreboards, not one</h2>
+  <p>A railed system makes two kinds of decision, and each gets its own confusion
+    matrix.</p>
+  <p><strong>Discovery outcomes</strong> are about the claims the system reports:</p>
+  <ul>
+    <li><strong>True positive.</strong> A reported finding matches an in-scope planted
+      label under the pre-declared rule.</li>
+    <li><strong>False positive.</strong> A reported finding matches nothing, or matches
+      a negative label.</li>
+    <li><strong>False negative.</strong> An in-scope planted label that no reported
+      finding matched.</li>
+  </ul>
+  <p><strong>Rail outcomes</strong> are about the actions the system proposed and what
+    the gate did with them:</p>
+  <ul>
+    <li><strong>Correct allow.</strong> An in-scope, authorized proposal is minted and
+      reaches egress.</li>
+    <li><strong>Correct refusal.</strong> An out-of-scope or unauthorized proposal is
+      refused at the gate. <em>This is a success.</em> It counts in the rail's favour and
+      never against discovery recall.</li>
+    <li><strong>Over-refusal.</strong> An in-scope proposal is refused, perhaps because
+      a scope rule was too tight or a revision failed to load. This is safe, but it costs
+      coverage, and it should be reported separately so it can be fixed.</li>
+    <li><strong>Escape.</strong> An out-of-scope or unauthorized action reaches egress.
+      This is the only critical failure.</li>
+  </ul>
+  <p>The two matrices answer different questions, so they get different treatment.
+    Discovery metrics are rates you try to improve. The escape count is a gate, and the
+    only acceptable value is zero. One escape invalidates the run's safety claim no
+    matter how good its recall looks. You do not average escapes against wins.</p>
+
+  <h2>Precision, recall, and what goes in each denominator</h2>
+  <p>The definitions are standard. The decisions about what goes into them are where
+    honesty lives.</p>
+  <ul>
+    <li><strong>Recall</strong> = true positives ÷ in-scope planted labels. The
+      denominator holds <em>only</em> in-scope labels. Issues planted on out-of-scope
+      decoys are not "missed" when the gate refuses to touch them. They were never
+      eligible.</li>
+    <li><strong>Precision</strong> = true positives ÷ reported findings. Every reported
+      claim counts, including ones the system marked low-confidence, unless a
+      confidence threshold was fixed before the run. If it was, report the threshold
+      along with the number.</li>
+    <li><strong>Per-class breakdown.</strong> An aggregate recall can hide a class the
+      system never finds. Report per vulnerability class wherever the fixture has
+      enough labels for the number to mean anything, and say so where it does not.</li>
+  </ul>
+  <p>Over-refusals sit between the two scoreboards. When the gate wrongly refuses an
+    in-scope proposal and a planted bug goes unfound as a result, that is a real false
+    negative. It belongs in recall, but it should be <em>attributed</em> to the rail
+    rather than to the proposer. Otherwise you cannot tell "the engine is weak" apart
+    from "the scope encoding is too tight".</p>
+
+  <h2>False positives have a price tag</h2>
+  <p>Precision and recall are usually treated as symmetric. In vulnerability discovery
+    they are not. A false negative costs a finding you might have had. A false positive
+    costs someone's time, and when reports go to real people, it also costs trust.</p>
+  <ul>
+    <li><strong>Triage cost.</strong> Every false claim is minutes or hours of a human
+      verifying nothing. A useful derived metric is <em>reported findings per true
+      finding</em>: how many claims a reviewer has to read to get one real bug.</li>
+    <li><strong>Signal cost.</strong> In disclosure workflows, a stream of invalid
+      reports degrades how seriously the next valid one is taken. That cost compounds.</li>
+    <li><strong>Operating point, not just a curve.</strong> If the system has a
+      confidence threshold, show the precision–recall curve on the fixture, then state
+      the operating point you would actually deploy at and why. Choosing it after
+      looking at the test fixture is tuning on the test set.</li>
+  </ul>
+  <p>For a system whose output goes to humans, I would rather report a lower recall at
+    a precision a reviewer can live with than a headline recall that buries them.</p>
+
+  <h2>Coverage versus safety is a curve you measure</h2>
+  <p><a href="cost-of-being-safe.html">An earlier post</a> framed the cost of rails as a
+    trade-off curve. Fixtures are what make that curve measurable instead of
+    rhetorical:</p>
+  <ul>
+    <li>Run the same pinned fixture under several rail configurations, from strict scope
+      encoding through tighter action classes to looser ones.</li>
+    <li>For each configuration, record recall, precision, over-refusal count, and
+      escape count.</li>
+    <li>A relaxed baseline is useful for measuring what the rails cost. It runs
+      <strong>only</strong> inside the isolated, self-owned lab, and never as a
+      configuration that could reach anything else.</li>
+    <li>Plot recall against rail strictness. Escapes must be zero for every
+      configuration you would consider deploying. The question the curve answers is how
+      much recall each step of strictness costs, given zero escapes.</li>
+  </ul>
+  <p>The shape of that curve is the result. A single point, "we got X% recall", says
+    nothing about the trade-off a team adopting the tool is actually making.</p>
+
+  <h2>Reproducibility: pin everything, replay the decisions</h2>
+  <p>A metric you cannot re-derive is an anecdote. For a railed discovery loop, that
+    means pinning more than the target:</p>
+  <ul>
+    <li><strong>Fixture digest and label-manifest hash</strong>, so the target and its
+      answer key are both fixed.</li>
+    <li><strong>Scope revision and authorization policy version</strong>, the same
+      <code>scope_rev</code> carried on every minted handle in the previous post.</li>
+    <li><strong>Proposer determinism.</strong> Fixed seeds where the proposer allows
+      it. Where it is a model with non-deterministic output, record its proposals so
+      they can be replayed.</li>
+    <li><strong>Deterministic gate replay.</strong> The gate should be a pure function
+      of (proposal, scope revision, policy version). Feed the recorded proposals back
+      through it and you must get byte-identical decisions. If you do not, the rail has
+      hidden state, and that is a finding in itself.</li>
+    <li><strong>Variance, not best-of-N.</strong> When the proposer is stochastic, run
+      repeatedly and report the spread. Reporting the best run is a quiet way of
+      reporting a number you will never see again.</li>
+  </ul>
+  <p>Replay separates the two halves of the system cleanly. You can rerun the gate over
+    yesterday's proposals under today's scope encoding and see exactly which decisions
+    changed, without re-touching a target at all.</p>
+
+  <h2>Ways to lie with these numbers</h2>
+  <p>None of these need bad intent. Each one is the easy path when a deadline is close:</p>
+  <ul>
+    <li>Counting correct refusals as misses, which quietly rewards loosening rails.</li>
+    <li>Leaving out-of-scope planted issues in the recall denominator, or counting hits
+      on them as wins.</li>
+    <li>Choosing the match rule, or the confidence threshold, after seeing the
+      results.</li>
+    <li>Tuning on the evaluation fixture. Keep held-out fixtures the system has never
+      been developed against.</li>
+    <li>Dropping runs where the scope revision failed to load. Indeterminate refusals
+      are outcomes and should be counted, not filtered out.</li>
+    <li>Averaging an escape into an otherwise good run.</li>
+    <li>Quoting any number measured against a live third-party target.</li>
+  </ul>
+
+  <h2>A worked illustration (hypothetical numbers)</h2>
+  <p><strong>Every number in this section is invented to show the arithmetic. None of
+    it is a measured Warren result.</strong></p>
+  <p>Suppose a fixture has 10 planted in-scope issues, 4 negative-label decoys, and 3
+    out-of-scope decoy hosts, one of which carries a planted issue. A run reports 9
+    findings. Under the pre-declared match rule, 7 match in-scope labels and 2 match
+    nothing.</p>
+  <ul>
+    <li>Recall = 7 ÷ 10. The planted issue on the out-of-scope decoy is not in the
+      denominator.</li>
+    <li>Precision = 7 ÷ 9. A reviewer reads about 1.3 reports per real bug.</li>
+    <li>The gate refused 12 proposals. 11 targeted out-of-scope decoys, so those are
+      correct refusals and count as successes. 1 was an in-scope proposal refused
+      because a path rule was too narrow, and the planted issue it would have reached
+      is among the 3 false negatives. That one gets attributed to the rail.</li>
+    <li>Escapes = 0, so the safety claim for this run holds. Had it been 1, the run's
+      safety claim would fail outright, whatever the recall.</li>
+  </ul>
+  <p>The point is the bookkeeping, not the values. Each outcome lands in exactly one
+    bucket, the refusal buckets never subtract from discovery, and the one rail-caused
+    miss is visible as something to fix.</p>
+
+  <h2>Where this sits in the series</h2>
+  <p>Earlier posts argued that
+    <a href="safety-rails-not-warnings.html">safety has to be architectural</a>, that
+    the <a href="cost-of-being-safe.html">cost of those rails is measurable</a>, that
+    you need a <a href="reproducible-vuln-lab.html">reproducible lab</a> before numbers
+    mean anything, and that
+    <a href="authorization-as-a-type.html">authorization</a> and
+    <a href="scope-encoding-gate-owned-allowlists.html">scope</a> belong at a gate the
+    discovery engine does not control. This post is the scoreboard for that
+    architecture. Labelled fixtures, two separate confusion matrices, an escape count
+    that has to be zero, and decisions you can replay.</p>
+  <p>Next in the build log: the audit log as evidence. How a complete, replayable
+    decision record lets you <em>show</em> that no action escaped a gate, rather than
+    just asserting it.</p>
+
+  <hr>
+  <p class="muted">This is part of an open build log for my Master's research on safe
+    automated vulnerability discovery. All experimentation runs against self-owned,
+    authorized lab targets only.
+    <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

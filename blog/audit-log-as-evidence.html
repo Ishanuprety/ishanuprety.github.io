@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The audit log as evidence — Ishan Uprety</title>
+<meta name="description" content="Why an autonomous vulnerability-discovery pipeline should trust an append-only, hash-chained, signed decision record rather than a model's self-report, and how that record makes zero escapes and fail-closed verification provable.">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">ishan<span class="dot">.</span>np</a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../projects.html">Projects</a>
+      <a href="../roadmap.html">Roadmap</a>
+      <a href="../blog.html" aria-current="page">Blog</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+<article class="post">
+  <h1>The audit log as evidence</h1>
+  <div class="byline">2026-10-19 · Ishan Uprety · 10 min read</div>
+
+  <p><a href="measuring-railed-discovery-against-fixtures.html">The last post</a> ended on
+    a rule: the escape count has to be zero, and one escape invalidates a run's safety
+    claim. That is easy to write down. The harder question is how anyone other than me
+    is supposed to believe it.</p>
+
+  <p>"Zero escapes" is a claim about every action the system <em>didn't</em> take
+    outside its bounds. Recall is a number you can check against a fixture's labels.
+    A safety claim is a statement about a whole run, and you can only check it if
+    something recorded that run in a way that can't be quietly rewritten. This post is
+    about that record: the audit log, treated as evidence rather than as debug
+    output.</p>
+
+  <blockquote>
+    A tool that says "trust me, I found this and I stayed in scope" is asserting, not
+    proving. Trust has to come from a record the tool cannot forge or edit after the
+    fact.
+  </blockquote>
+
+  <h2>Why self-report isn't evidence</h2>
+  <p>Once a model is in the discovery loop, the tempting shortcut is to ask it. Did
+    you confirm the finding? Did every request stay in scope? The model will answer,
+    fluently and confidently, and the answer is worth roughly nothing as evidence:</p>
+  <ul>
+    <li><strong>It is generated, not observed.</strong> A model's summary of what it did
+      is another output of the same process you are trying to audit. It can be wrong in
+      exactly the cases where you most need it to be right.</li>
+    <li><strong>It is unfalsifiable after the fact.</strong> "I stayed in scope" with no
+      underlying record cannot be checked by a reviewer. All they can do is believe it or
+      not.</li>
+    <li><strong>It is shaped by the goal.</strong> A proposer that is optimised to find
+      bugs has every incentive, statistically if not intentionally, to describe a weak
+      signal as a confirmation. That isn't malice. It is just what optimisation
+      pressure does to a self-description.</li>
+  </ul>
+  <p>The same is true of any component reporting on itself, model or not. A logger
+    that the discovery engine can write to, edit, and truncate is just a longer
+    self-report.</p>
+
+  <h2>Separate the recorder from the engine</h2>
+  <p>The earlier posts in this series kept applying one move: take a decision away from
+    the component that benefits from it.
+    <a href="authorization-as-a-type.html">Authorization</a> is minted at a gate the
+    engine doesn't control, and so is <a href="scope-encoding-gate-owned-allowlists.html">scope</a>.
+    The audit log is the same move applied to memory.</p>
+  <ul>
+    <li><strong>The engine proposes.</strong> It can suggest an action, a candidate
+      finding, a confidence. It cannot decide whether that action was allowed, and it
+      cannot set its own verdict.</li>
+    <li><strong>The gate decides and records.</strong> The gate's allow or refuse
+      decision is written to the log by the gate, not relayed through the engine.</li>
+    <li><strong>The log is write-only to producers.</strong> Components can append. None
+      of them can read back and modify, reorder, or delete. Nothing in the discovery path
+      holds the signing key.</li>
+  </ul>
+  <p>Separation of powers sounds grand for what is mostly a permissions decision. But it
+    is the difference between "the system says it behaved" and "the system could not
+    have hidden it if it hadn't".</p>
+
+  <h2>Anatomy of a log you can use as evidence</h2>
+  <p>I think of it as a spine. Every decision the pipeline makes is pinned to it, in
+    order, and the spine itself is what you hand to a reviewer. Three properties make it
+    a spine rather than a text file:</p>
+  <ul>
+    <li><strong>Append-only.</strong> Events are added, never rewritten or deleted. A
+      correction is a new event that references the old one, not an edit.</li>
+    <li><strong>Hash-chained.</strong> Each entry includes the hash of the previous
+      entry. Change any byte of an old entry and every hash after it stops matching.
+      Delete an entry and the chain has a visible gap.</li>
+    <li><strong>Signed.</strong> The chain head is signed periodically by a key the
+      engine never sees. A hash chain alone shows that the record is internally
+      consistent. The signature shows <em>who</em> vouches for it and pins the record at
+      a point in time, so the whole chain can't be regenerated from scratch to match a
+      wished-for outcome.</li>
+  </ul>
+  <p>None of this is novel. It is the same idea behind certificate transparency logs and
+    tamper-evident system logging. What is less common is applying it to the decisions
+    of an autonomous security tool, which is exactly where it matters most.</p>
+
+  <h2>What goes in</h2>
+  <p>The test for content is replay: a reviewer should be able to reconstruct every
+    decision from the log alone, without re-touching a target. For each step that
+    means:</p>
+  <ul>
+    <li><strong>The proposal</strong>: the structured action or candidate the engine put
+      forward, as data, not as the engine's narrative about it.</li>
+    <li><strong>The gate decision</strong>: allow or refuse, and the rule that produced
+      it.</li>
+    <li><strong>What was in force</strong>: the scope revision and the authorization
+      policy version the gate evaluated against, the same <code>scope_rev</code> the
+      earlier posts put on every minted handle.</li>
+    <li><strong>The verifier's observation</strong>: what it re-observed, the confidence
+      it computed, and the floor it was compared against.</li>
+    <li><strong>The verdict</strong>: confirmed, not confirmed, or indeterminate, and
+      which component set it.</li>
+    <li><strong>Timestamps and linkage</strong>: when each event happened and which
+      earlier events it depends on.</li>
+  </ul>
+  <p>Here is the <em>shape</em> of one such entry. <strong>It is illustrative only: a
+    hypothetical sketch of the fields, not a real Warren artifact or format.</strong></p>
+  <ul>
+    <li><code>seq</code>: position in the chain</li>
+    <li><code>prev_hash</code>: hash of the previous entry</li>
+    <li><code>event</code>: e.g. <code>gate_decision</code> or <code>verification</code></li>
+    <li><code>proposal_ref</code>: reference to the structured proposal being decided on</li>
+    <li><code>scope_rev</code>, <code>policy_version</code>: what the gate evaluated
+      against</li>
+    <li><code>decision</code>: allow / refuse, plus the rule identifier</li>
+    <li><code>confidence</code>, <code>floor</code>: for verification events only</li>
+    <li><code>verdict</code>, <code>set_by</code>: the outcome and the component that set
+      it, which is never the proposer</li>
+    <li><code>ts</code>: timestamp</li>
+  </ul>
+
+  <h2>What stays out</h2>
+  <p>What you leave out matters just as much. An evidence log can fail by holding too
+    much as easily as by holding too little.</p>
+  <ul>
+    <li><strong>Secrets.</strong> Credentials, session tokens, and client certificates
+      live behind the gate. The log records that a scoped credential was used, never its
+      value. An audit trail that leaks secrets becomes a liability you can't hand to a
+      reviewer.</li>
+    <li><strong>Model free-text as a verdict.</strong> The model's reasoning can be kept
+      as a clearly labelled, unsigned annotation for debugging. It never goes into the
+      verdict field, and it never gets signed as if it were an observation.</li>
+    <li><strong>Raw response bodies by default.</strong> Store a digest, or a minimal
+      redacted excerpt where the verifier needs it. Full captures of third-party data
+      don't belong in a record whose job is to be shared.</li>
+    <li><strong>Anything that lets the record be fitted to the outcome.</strong> No
+      "summary" fields filled in after the run, and no rewritten entries. If a later
+      stage changes its mind, that is a new event.</li>
+  </ul>
+
+  <h2>Verification writes only to the spine</h2>
+  <p>This is where the post connects to my own work. My research system, Warren, just
+    gained an autonomous-verification stage, and the audit log is what keeps it
+    honest. At the design level it works like this:</p>
+  <ul>
+    <li><strong>It re-observes, inertly.</strong> The verifier looks again at the
+      candidate's detection signal. It doesn't re-exploit, probe harder, or take any new
+      action against the target. Verification that needs a bigger hammer than discovery
+      used is no longer verification.</li>
+    <li><strong>It confirms only above a confidence floor.</strong> The floor is fixed in
+      configuration ahead of time, and both the computed confidence and the floor are
+      recorded, so a reviewer can see the margin rather than just the verdict.</li>
+    <li><strong>It fails closed.</strong> An indeterminate observation is <em>not
+      confirmed</em>. So is any safety-stop signal during verification. There is no
+      "probably" bucket that drifts into the findings list.</li>
+    <li><strong>It writes only to the signed spine.</strong> The verdict lands in the log
+      through the recorder. The proposer can't set it, can't sign it, and its own claim
+      about the candidate never appears in the verdict field.</li>
+  </ul>
+  <p>The model proposes. It doesn't get to grade its own work, and it doesn't hold the
+    pen that records the grade.</p>
+
+  <h2>What it buys you</h2>
+  <ul>
+    <li><strong>Reproducibility.</strong> Replay the recorded proposals through the gate
+      under the recorded scope revision and policy version, and you should get the same
+      decisions. The last post argued the gate should be a pure function. The log is the
+      input you need to test that.</li>
+    <li><strong>Non-repudiation.</strong> A signed chain can't be quietly rewritten. If
+      the record says an action was refused, nobody can later claim it was allowed, and
+      the reverse holds too. That cuts both ways, which is the point.</li>
+    <li><strong>Review without re-touching.</strong> A supervisor, an examiner, a program
+      triager, or a second model can check that the gate held and the floor was met by
+      reading the record. Nobody has to send another packet to a target to audit the
+      run.</li>
+  </ul>
+  <p>It also changes what the claims in this series mean. "Escapes must be zero" from
+    the last post only becomes credible once you can <em>show</em> it: every egress event
+    in the log has a matching allow decision, and every allow has an in-scope revision
+    behind it. Fail-closed verification only counts if each verdict is pinned to
+    tamper-evident evidence. Without the log, both are just intentions.</p>
+
+  <h2>Ways to get it wrong</h2>
+  <p>Most of these are tempting because they make the log easier to build or nicer to
+    read:</p>
+  <ul>
+    <li>Logging the model's self-claim ("confirmed, high confidence") as the verdict.</li>
+    <li>A mutable log: a database table the engine can <code>UPDATE</code>, or a file it
+      can rewrite.</li>
+    <li>Hashing without signing, or signing with a key the engine can reach. Either way
+      the chain can be regenerated end to end.</li>
+    <li>Leaking secrets or raw third-party data into evidence, so the record can never be
+      shared.</li>
+    <li>After-the-fact edits, even well-meant ones like "fixing a typo" in a decision
+      reason. Append a correction instead.</li>
+    <li>Logging only allowed actions. Refusals are half the safety story, and an
+      escape count is only meaningful if the refusals are on the record too.</li>
+    <li>Silently dropping log writes under load. If the recorder can't write, the action
+      shouldn't happen. The log fails closed too.</li>
+  </ul>
+  <p>The trade-offs are real. Signing and chaining cost a little latency and some
+    operational care around keys. Redaction means a reviewer sometimes sees a digest
+    where they would like the full response. I think that is the right side of the
+    trade for a tool that acts on systems it doesn't own.</p>
+
+  <h2>Where this sits in the series</h2>
+  <p>Earlier posts argued that
+    <a href="safety-rails-not-warnings.html">safety has to be architectural</a>, that
+    <a href="authorization-as-a-type.html">authorization</a> and
+    <a href="scope-encoding-gate-owned-allowlists.html">scope</a> belong at a gate the
+    discovery engine doesn't control, and that the system should be
+    <a href="measuring-railed-discovery-against-fixtures.html">measured against labelled
+    fixtures</a> with an escape count that must be zero. This post is what turns those
+    rules into something you can check: a write-only, hash-chained, signed record of
+    every decision, which the engine can add to but never edit.</p>
+  <p>Next in the build log: fail-closed verification in practice. What "inert
+    re-observation" can and can't confirm, and where a confidence floor should
+    come from.</p>
+
+  <hr>
+  <p class="muted">This is part of an open build log for my Master's research on safe
+    automated vulnerability discovery. All experimentation runs against self-owned,
+    authorized lab targets only.
+    <a href="../research.html">More about the research →</a></p>
+</article>
+</div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© <span id="yr"></span> Ishan Uprety · Alias <code>Reck1ess</code></span>
+    <span><a href="../contact.html">Contact</a> · <a href="../blog.html">Blog</a></span>
+  </div>
+</footer>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

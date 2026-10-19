@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Ishan Uprety — Blog</title>
+    <link>https://ishanuprety.com.np/blog.html</link>
+    <description>Notes on safe automated vulnerability discovery.</description>
+    <item>
+      <title>The audit log as evidence</title>
+      <link>https://ishanuprety.com.np/blog/audit-log-as-evidence.html</link>
+      <guid>https://ishanuprety.com.np/blog/audit-log-as-evidence.html</guid>
+      <pubDate>2026-10-19</pubDate>
+    </item>
+    <item>
+      <title>Measuring railed discovery: metrics against fixtures, not hope</title>
+      <link>https://ishanuprety.com.np/blog/measuring-railed-discovery-against-fixtures.html</link>
+      <guid>https://ishanuprety.com.np/blog/measuring-railed-discovery-against-fixtures.html</guid>
+      <pubDate>2026-10-19</pubDate>
+    </item>
+    <item>
+      <title>Scope encoding: allowlists the gate owns</title>
+      <link>https://ishanuprety.com.np/blog/scope-encoding-gate-owned-allowlists.html</link>
+      <guid>https://ishanuprety.com.np/blog/scope-encoding-gate-owned-allowlists.html</guid>
+      <pubDate>2026-10-18</pubDate>
+    </item>
+    <item>
+      <title>Authorization as a type, not a checkbox</title>
+      <link>https://ishanuprety.com.np/blog/authorization-as-a-type.html</link>
+      <guid>https://ishanuprety.com.np/blog/authorization-as-a-type.html</guid>
+      <pubDate>2026-10-17</pubDate>
+    </item>
+    <item>
+      <title>Building a reproducible vuln lab you actually trust</title>
+      <link>https://ishanuprety.com.np/blog/reproducible-vuln-lab.html</link>
+      <guid>https://ishanuprety.com.np/blog/reproducible-vuln-lab.html</guid>
+      <pubDate>2026-10-17</pubDate>
+    </item>
+    <item>
+      <title>Safety rails, not safety warnings: why responsible automation has to be architectural</title>
+      <link>https://ishanuprety.com.np/blog/safety-rails-not-warnings.html</link>
+      <guid>https://ishanuprety.com.np/blog/safety-rails-not-warnings.html</guid>
+      <pubDate>2026-10-15</pubDate>
+    </item>
+    <item>
+      <title>The cost of being safe: measuring the trade-off in automated vulnerability discovery</title>
+      <link>https://ishanuprety.com.np/blog/cost-of-being-safe.html</link>
+      <guid>https://ishanuprety.com.np/blog/cost-of-being-safe.html</guid>
+      <pubDate>2026-10-15</pubDate>
+    </item>
+  </channel>
+</rss>
